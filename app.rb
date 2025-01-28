@@ -6,6 +6,17 @@ require 'becrypt'
 
 enable :sessions
 
+before do
+    if (session[:user_id] == nil) && (request.path_info != '/')
+    session[:error] = "You need to log in to see this"
+    redirect('/error')
+
+def connect_to_db(path)
+    db = SQLite3::Database.new(path)
+    db.results_as_hash = true
+    return db
+end
+
 get('/') do
     slim(:index)
 end
@@ -17,11 +28,6 @@ end
 get('/showregister') do
     slim(:register)
 end
-
-
-
-
-
 
 
 # get('/') do
