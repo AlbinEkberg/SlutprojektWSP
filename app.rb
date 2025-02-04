@@ -2,17 +2,18 @@ require 'sinatra'
 require 'slim'
 require 'sqlite3'
 require 'sinatra/reloader'
-require 'becrypt'
+require 'bcrypt'
 
 enable :sessions
 
-before do
-    if (session[:user_id] == nil) && (request.path_info != '/')
-    session[:error] = "You need to log in to see this"
-    redirect('/error')
-
-def connect_to_db(path)
-    db = SQLite3::Database.new(path)
+# before do
+#     if (session[:user_id] == nil) && (request.path_info != '/') && (request.path_info != '/error')
+#         session[:error] = "You need to log in to see this"
+#         redirect('/error')
+#     end
+# end
+def connect_to_db()
+    db = SQLite3::Database.new('db/clash.db')
     db.results_as_hash = true
     return db
 end
@@ -20,6 +21,9 @@ end
 get('/') do
     slim(:index)
 end
+
+# kista antingen välja att spara eller öppna --> öppna --> man får kort + ny kista genereras --> loopa
+# kistor slumpas med olika sannolikhet, samma med korten
 
 get('/showlogin') do
     slim(:login)
@@ -29,52 +33,45 @@ get('/showregister') do
     slim(:register)
 end
 
+get('/cardcollection') do
+    slim(:card_collection)
+end
 
-# get('/') do
-#   slim(:register)
-# end
+get('/chestcollection') do
+    slim(:chestcollection)
+end
 
-# get('/showlogin') do
-#   slim(:login)
-# end
+get('/market') do
+    slim(:market)
+end
 
-# post('/login') do
-#   username = params[:username]
-#   password = params[:password]
-#   db = SQLite3::Database.new('db/todo2024.db')
-#   db.results_as_hash = true
-#   result = db.execute("SELECT * FROM users WHERE username = ?",username).first
-#   pwdigest = result["pwdigest"]
-#   id = result["id"]
+post('/login') do
+    username = params[:username]
+    password = params[:password]
+    db = connect_to_db()
+    result = db.execute("SELECT * FROM users WHERE username = ?",username).first
+    pwdigest = result["pwdigest"]
+    id = result["id"]
 
-#   if BCrypt::Password.new(pwdigest) == password
-#     session[:id] = id
-#     redirect('/todos')
-#   else
-#     "Fel lösen"
-#   end
-# end
+  if BCrypt::Password.new(pwdigest) == password
+    session[:username] = username
+    redirect('/')
+  else
+    "Fel lösen"
+  end
+end
 
-# get('/todos') do
-#   id = session[:id].to_i
-#   db = SQLite3::Database.new('db/todo2024.db')
-#   db.results_as_hash = true
-#   result = db.execute("SELECT * FROM todos WHERE user_id = ?",id)
-#   p "results är #{result}"
-#   slim(:"todos/index",locals:{todos:result})
-# end
-
-# post('/users/new') do
-#   username = params[:username]
-#   password = params[:password]
-#   password_confirm = params[:password_confirm]
-
-#   if (password == password_confirm)
-#     password_digest = BCrypt::Password.create(password)
-#     db = SQLite3::Database.new('db/todo2024.db')
-#     db.execute("INSERT INTO users (username, pwdigest) VALUES (?,?)",[username,password_digest])
-#     redirect('/')
-#   else
-#     "password mismatch"
-#   end
-# end
+post('/users/new') do
+    username = params[:username]
+    password = params[:password]
+    password_confirm = params[:password_confirm]
+  
+    if (password == password_confirm)
+        password_digest = BCrypt::Password.create(password)
+        db = SQLite3::Database.new('db/clash.db')
+        db.execute("INSERT INTO users (username, pwdigest, balance) VALUES (?,?,?)",[username,password_digest,1000])
+        redirect('/')
+    else
+        "password mismatch"
+    end
+  end
