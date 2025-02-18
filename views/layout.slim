@@ -6,11 +6,12 @@ html lang="en"
     link rel="stylesheet" href="css/style.css"/
     title Chest Opener
   body
-    a href="/showlogin" Login
-    nav
-      a href="/cardcollection" Collection
-      a href="/"
-      a href="/market" Market
-    h1 Chest Opener
+    div id="grid_wrapper_home"
+      a href="/showlogin" Login
+      nav id="menu"
+        a class="menu_button" href="/cardcollection" Collection
+        a class="menu_button" href="/" Home
+        a class="menu_button" href="/market" Market
+      h1 Chest Opener
 
     == yield
