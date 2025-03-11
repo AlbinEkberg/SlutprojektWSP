@@ -3,8 +3,47 @@ require 'slim'
 require 'sqlite3'
 require 'sinatra/reloader'
 require 'bcrypt'
+require 'sinatra/flash'
 
 enable :sessions
+
+def connect_to_db()
+    db = SQLite3::Database.new('db/clash.db')
+    db.results_as_hash = true
+    return db
+end
+
+def generate_chest()
+    db = connect_to_db()
+    chests = db.execute("SELECT * FROM chests")
+    total_rarity = chests.sum { |chest| chest["rarity"] }
+    random_value = rand(total_rarity)
+
+    cumulative_rarity = 0
+    p random_value
+    selected_chest = chests.find do |chest|
+        cumulative_rarity += chest["rarity"]
+        random_value < cumulative_rarity
+    end
+
+    session[:current_chest] = selected_chest
+end
+
+def generate_card()
+    db = connect_to_db()
+    cards = db.execute("SELECT * FROM cards")
+    total_rarity = cards.sum { |card| card["rarity"] }
+    random_value = rand(total_rarity)
+
+    cumulative_rarity = 0
+    p random_value
+    selected_card = cards.find do |card|
+        cumulative_rarity += card["rarity"]
+        random_value < cumulative_rarity
+    end
+
+    session[:current_card] = selected_card
+end
 
 # before do
 #     if (session[:user_id] == nil) && (request.path_info != '/') && (request.path_info != '/error')
@@ -12,13 +51,11 @@ enable :sessions
 #         redirect('/error')
 #     end
 # end
-def connect_to_db()
-    db = SQLite3::Database.new('db/clash.db')
-    db.results_as_hash = true
-    return db
-end
 
 get('/') do
+    if session[:current_chest] == nil
+        generate_chest()
+    end
     slim(:index)
 end
 
@@ -26,26 +63,43 @@ end
 # kistor slumpas med olika sannolikhet, samma med korten
 
 get('/showlogin') do
-    slim(:login)
+    slim(:'users/login')
 end
 
-get('/showregister') do
-    slim(:register)
+get('/users/register') do
+    slim(:'users/register')
 end
 
-get('/cardcollection') do
-    slim(:card_collection)
+get('/collection/card') do
+    slim(:'collection/card')
 end
 
-get('/chestcollection') do
-    slim(:chestcollection)
+get('/chest') do
+    slim(:'collection/chest')
 end
 
-get('/market') do
-    slim(:market)
+get('/market/index') do
+    slim(:'market/index')
 end
 
-post('/login') do
+get('/chest/open') do
+    case session[:current_chest]["rarity"]
+    when 1..100
+        card_amount = 4
+    when 101..200
+        card_amount = 3
+    when 201..300
+        card_amount = 2
+    end
+
+    while card_amount > 0
+        generate_card()
+        card_amount -= 1
+    end
+    slim(:'users/chest_unlock', layout: false)
+end
+
+post('/users/login') do
     username = params[:username]
     password = params[:password]
     db = connect_to_db()
@@ -57,7 +111,7 @@ post('/login') do
     session[:username] = username
     redirect('/')
   else
-    "Fel lösen"
+    flash[:error] = "Fel lösen"
   end
 end
 
@@ -74,4 +128,5 @@ post('/users/new') do
     else
         "password mismatch"
     end
-  end
+end
+

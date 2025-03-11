@@ -1,0 +1,4 @@
+h1 hej
+h1 #{session[:current_card]}
+form action="/chest/open" method="POST"
+    input type="image" name="card" src="img/cards/#{session[:current_card]["img"]}" alt="unlocked card"/

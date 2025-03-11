@@ -3,15 +3,14 @@ html lang="en"
   head
     meta charset="UTF-8"/
     meta name="viewport" content="width=device-width, initial-scale=1.0"/
-    link rel="stylesheet" href="css/style.css"/
+    link rel="stylesheet" href="/css/style.css"/
     title Chest Opener
   body
     div id="grid_wrapper_home"
       a href="/showlogin" Login
-      nav id="menu"
-        a class="menu_button" href="/cardcollection" Collection
-        a class="menu_button" href="/" Home
-        a class="menu_button" href="/market" Market
       h1 Chest Opener
-
-    == yield
+      == yield
+      nav id="menu"
+        a class="menu_button" href="/collection/card" Collection
+        a class="menu_button" href="/" Home
+        a class="menu_button" href="/market/index" Market
