@@ -1,7 +1,7 @@
 div 
     h1 #{session[:username]}
 
-    a href="/chest/open"
-        img src="img/chests/#{session[:current_chest]["img"]}" alt="current chest"/
+    form action="/chest/open" method="POST"
+        input type="image" name="chest" src="/img/chests/#{session[:current_chest]["img"]}" alt="current chest"/
 
     h1 #{session[:current_chest]["name"]}

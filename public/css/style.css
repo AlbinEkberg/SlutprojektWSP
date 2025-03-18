@@ -70,6 +70,12 @@ a:hover {
     justify-content: space-around;
 }
 
+#open_chest {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
 /*-Classes--------------------------------------------------------------------------------------------------------*/
 
 .menu_button {

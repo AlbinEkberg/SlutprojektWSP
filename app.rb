@@ -20,7 +20,6 @@ def generate_chest()
     random_value = rand(total_rarity)
 
     cumulative_rarity = 0
-    p random_value
     selected_chest = chests.find do |chest|
         cumulative_rarity += chest["rarity"]
         random_value < cumulative_rarity
@@ -36,13 +35,12 @@ def generate_card()
     random_value = rand(total_rarity)
 
     cumulative_rarity = 0
-    p random_value
     selected_card = cards.find do |card|
         cumulative_rarity += card["rarity"]
         random_value < cumulative_rarity
     end
 
-    session[:current_card] = selected_card
+    return selected_card
 end
 
 # before do
@@ -82,21 +80,40 @@ get('/market/index') do
     slim(:'market/index')
 end
 
-get('/chest/open') do
-    case session[:current_chest]["rarity"]
-    when 1..100
-        card_amount = 4
-    when 101..200
-        card_amount = 3
-    when 201..300
-        card_amount = 2
+get('/showchest') do
+    slim(:'users/chest_unlock', layout: false)
+end
+
+post('/chest/open') do
+    if session[:current_chest] != nil
+        case session[:current_chest]["rarity"] # different amount of cards depending on rarity
+        when 1..100
+            card_amount = 4
+        when 101..200
+            card_amount = 3
+        when 201..300
+            card_amount = 2
+        end
+
+        gotten_cards = []
+    
+        i = card_amount
+        while i > 0
+            gotten_cards << generate_card()
+            i -= 1
+        end
+        session[:current_chest] = nil
+        session[:cards_left] = card_amount
+        session[:gotten_cards] = gotten_cards
     end
 
-    while card_amount > 0
-        generate_card()
-        card_amount -= 1
+    if session[:cards_left] > 0
+        session[:current_card] = session[:gotten_cards][session[:cards_left] - 1]
+        session[:cards_left] -= 1
+        redirect('/showchest')
+    else
+        redirect('/')
     end
-    slim(:'users/chest_unlock', layout: false)
 end
 
 post('/users/login') do
