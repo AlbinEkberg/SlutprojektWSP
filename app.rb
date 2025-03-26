@@ -13,7 +13,7 @@ def connect_to_db()
     return db
 end
 
-def generate_chest()
+def generate_chest() # väljer en kista baserat på sällsynthet högre sällsynthet = bättre kista
     db = connect_to_db()
     chests = db.execute("SELECT * FROM chests")
     total_rarity = chests.sum { |chest| chest["rarity"] }
@@ -28,7 +28,7 @@ def generate_chest()
     session[:current_chest] = selected_chest
 end
 
-def generate_card()
+def generate_card() # väljer ett kort baserat på sällsynthet högre sällsynthet = bättre kort
     db = connect_to_db()
     cards = db.execute("SELECT * FROM cards")
     total_rarity = cards.sum { |card| card["rarity"] }
@@ -57,9 +57,6 @@ get('/') do
     slim(:index)
 end
 
-# kista antingen välja att spara eller öppna --> öppna --> man får kort + ny kista genereras --> loopa
-# kistor slumpas med olika sannolikhet, samma med korten
-
 get('/showlogin') do
     slim(:'users/login')
 end
@@ -69,7 +66,14 @@ get('/users/register') do
 end
 
 get('/collection/card') do
-    slim(:'collection/card')
+    db = connect_to_db()
+    cards = db.execute("SELECT * FROM cards")
+    cards_rel = db.execute("SELECT * FROM users_cards_rel WHERE user_id = ?",session[:id])
+    slim(:'collection/card',locals:{cards:cards,cards_rel:cards_rel})
+end
+
+get('/albums') do
+
 end
 
 get('/chest') do
@@ -85,8 +89,8 @@ get('/showchest') do
 end
 
 post('/chest/open') do
-    if session[:current_chest] != nil
-        case session[:current_chest]["rarity"] # different amount of cards depending on rarity
+    if session[:current_chest] != nil # körs första gången
+        case session[:current_chest]["rarity"] # olika mängd kort beroende på sällsynthet
         when 1..100
             card_amount = 4
         when 101..200
@@ -96,18 +100,25 @@ post('/chest/open') do
         end
 
         gotten_cards = []
-    
+        db = connect_to_db()
         i = card_amount
         while i > 0
             gotten_cards << generate_card()
+            if db.execute("SELECT card_id FROM users_cards_rel WHERE user_id = ?",session[:id]).include?({ "card_id" => gotten_cards[-1]['id'] })
+                db.execute("UPDATE users_cards_rel SET amount = amount + 1 WHERE user_id = ? AND card_id = ?",[session[:id],gotten_cards[-1]["id"]])
+            else
+                db.execute("INSERT INTO users_cards_rel (user_id, card_id, amount, level, for_sale) VALUES (?,?,?,?,?)",[session[:id],gotten_cards[-1]["id"],1,gotten_cards[-1]["base_lvl"],0])
+            end
             i -= 1
         end
+        
+
         session[:current_chest] = nil
         session[:cards_left] = card_amount
         session[:gotten_cards] = gotten_cards
     end
 
-    if session[:cards_left] > 0
+    if session[:cards_left] > 0 # körs varje gång du klickar för att vissa nästa kort
         session[:current_card] = session[:gotten_cards][session[:cards_left] - 1]
         session[:cards_left] -= 1
         redirect('/showchest')
@@ -121,15 +132,19 @@ post('/users/login') do
     password = params[:password]
     db = connect_to_db()
     result = db.execute("SELECT * FROM users WHERE username = ?",username).first
+    if result == nil
+        flash[:error] = "No such user"
+    end
     pwdigest = result["pwdigest"]
     id = result["id"]
 
-  if BCrypt::Password.new(pwdigest) == password
-    session[:username] = username
-    redirect('/')
-  else
-    flash[:error] = "Fel lösen"
-  end
+    if BCrypt::Password.new(pwdigest) == password
+        session[:id] = id
+        session[:username] = username
+        redirect('/')
+    else
+        flash[:error] = "Wrong password"
+    end
 end
 
 post('/users/new') do

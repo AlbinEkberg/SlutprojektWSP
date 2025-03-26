@@ -1,5 +1,13 @@
-
+- case session[:current_card]['rarity']
+    - when 1000
+        - rarity = 'common'
+    - when 100
+        - rarity = 'rare'
+    - when 10
+        - rarity = 'epic'
+    - when 1
+        - rarity = 'legendary'
 form action="/chest/open" method="POST"
-        input type="image" name="card" src="/img/cards/common/#{session[:current_card]["img"]}" alt="card from chest"/
+        input type="image" name="card" src="/img/cards/#{rarity}/#{session[:current_card]["img"]}" alt="card from chest"/
 
 h1 #{session[:current_card]["name"]}

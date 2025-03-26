@@ -1,1 +1,18 @@
-p test
+h1 Card Collection
+
+ol id="card_list"
+    - cards_rel.each do |card_rel|
+        div class="card"
+            - card = cards.find { |c| c['id'] == card_rel['card_id'] }
+            - case card['rarity']
+                - when 1000
+                    - rarity = 'common'
+                - when 100
+                    - rarity = 'rare'
+                - when 10
+                    - rarity = 'epic'
+                - when 1
+                    - rarity = 'legendary'
+            img class="card_img" src="/img/cards/#{rarity}/#{card['img']}" alt="image of #{card['name']}"/
+            p class="#{rarity}_card" = card['name']
+            p amount: #{card_rel['amount']}

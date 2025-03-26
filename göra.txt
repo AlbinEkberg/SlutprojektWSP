@@ -4,3 +4,13 @@ och olika behörigheter
 med before block
 
 kika på bedömningsanvisningar
+
+bugg ifall man går tillbaka när man öppnat en kista så kan man öppna samma kista igen fast få ett nytt kort
+
+Bugg när man loggar in om inte kontot finns
+
+kan inte logga ut
+
+auto inloggning vid registrering
+
+admin - kunna lägga till kort, ta bort från marknaden
