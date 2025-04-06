@@ -55,17 +55,74 @@ a {
     color: aliceblue;
 }
 
+h1 {
+    color: aliceblue;
+    font-family: 'Courier New', Courier, monospace;
+}
+
 a:hover {
     background-color: rgba(120, 113, 169, 0.7);
 }
 
 /*-Ids------------------------------------------------------------------------------------------------------------*/
 
+#chest_unlock {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+}
+
+#chest {
+    grid-area: chst;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+#card_img {
+    width: 300px;
+}
+
+#chest_img {
+    width: 300px;
+}
+
+#deck {
+    grid-area: deck;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding: 50px;
+}
+
+#balance {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+}
+
+#balance_text {
+    font-size: 30px;
+    font-family: 'Courier New', Courier, monospace;
+    color: gold;
+    text-shadow: 4px 4px 4px black, 0 0 2px black;
+}
+
+#coin_icon {
+    width: 50px;
+    height: 50px;
+}
+
 #card_list {
     grid-area: cont;
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
+    align-content: space-around;
     gap: 50px;
     padding: 50px;
 }
@@ -85,7 +142,39 @@ a:hover {
     align-items: center;
 }
 
+#stat {
+    grid-area: stat;
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+    align-items: center;
+    font-size: 30px;
+    font-family: 'Courier New', Courier, monospace;
+    background-color: rgba(25, 20, 65, 0.5);
+}
+
+#title {
+    font-size: 50px;
+    font-family: 'Courier New', Courier, monospace;
+    animation: color-change 2s infinite;
+}
+
 /*-Classes--------------------------------------------------------------------------------------------------------*/
+
+.notice {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: aliceblue;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 20px;
+    text-shadow: 4px 4px 4px black, 0 0 2px black;
+    background-color: rgba(25, 20, 65, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.5);
+}
 
 .menu_button {
     width: 100%;
@@ -106,7 +195,6 @@ a:hover {
     border-radius: 10px;
     box-shadow: 0 0 10px 5px rgba(0, 0, 0, 0.5);
     overflow: hidden;
-    text-shadow: 4px 4px 4px black, 0 0 2px black;
 }
 
 .card_img {
@@ -115,26 +203,37 @@ a:hover {
     object-fit: contain;
 }
 
+.gold_card {
+    color: gold;
+    text-shadow: 4px 4px 4px black, 0 0 2px black;
+}
+
 .common_card {
     color: gray;
+    text-shadow: 4px 4px 4px black, 0 0 2px black;
 }
 
 .rare_card {
     color: orange;
+    text-shadow: 4px 4px 4px black, 0 0 2px black;
 }
 
 .epic_card {
     color: rgb(171, 10, 152);
+    text-shadow: 4px 4px 4px black, 0 0 2px black;
 }
 
 .legendary_card {
-    animation: color-change 1s infinite;
+    animation: color-change 2s infinite;
+    text-shadow: 4px 4px 4px black, 0 0 2px black;
 }
 
 /*-Animations-----------------------------------------------------------------------------------------------------*/
 
 @keyframes color-change {
     0% { color: lime; }
-    50% { color: orange; }
-    100% { color: purple; }
+    25% { color: orange; }
+    50% { color: purple; }
+    75% { color: orange; }
+    100% { color: lime; }
 }

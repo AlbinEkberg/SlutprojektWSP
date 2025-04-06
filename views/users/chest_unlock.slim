@@ -1,13 +1,10 @@
-- case session[:current_card]['rarity']
-    - when 1000
-        - rarity = 'common'
-    - when 100
-        - rarity = 'rare'
-    - when 10
-        - rarity = 'epic'
-    - when 1
-        - rarity = 'legendary'
-form action="/chest/open" method="POST"
-        input type="image" name="card" src="/img/cards/#{rarity}/#{session[:current_card]["img"]}" alt="card from chest"/
+link rel="stylesheet" href="/css/style.css"/
 
-h1 #{session[:current_card]["name"]}
+div id="chest_unlock"
+    form action="/chest/open" method="POST"
+        - if session[:current_card][:card]["id"] == 44
+            input type="image" name="card" src="/img/other/coin_icon.png" alt="gold from chest" id="card_img"
+        - else
+            input type="image" name="card" src="/img/cards/#{session[:current_card][:card]['rarity']}/#{session[:current_card][:card]["img"]}" alt="card from chest" id="card_img"
+
+    h1 class="#{session[:current_card][:card]['rarity']}_card" #{session[:current_card][:amount]}x #{session[:current_card][:card]["name"]}

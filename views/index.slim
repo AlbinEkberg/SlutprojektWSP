@@ -1,7 +1,6 @@
-div 
-    h1 #{session[:username]}
+div id="chest"
 
     form action="/chest/open" method="POST"
-        input type="image" name="chest" src="/img/chests/#{session[:current_chest]["img"]}" alt="current chest"/
+        input type="image" name="chest" src="/img/chests/#{session[:current_chest]["img"]}" alt="current chest" id="chest_img"
 
     h1 #{session[:current_chest]["name"]}

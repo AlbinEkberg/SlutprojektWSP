@@ -7,10 +7,28 @@ html lang="en"
     title Chest Opener
   body
     div id="grid_wrapper_home"
-      a href="/showlogin" Login
-      h1 Chest Opener
+      div id="stat"
+        section id="balance"
+          p id="balance_text" #{session[:balance]}
+          img src="/img/other/coin_icon.png" alt="coin icon" id="coin_icon"
+
+        h1 id="title" Chest Opener
+        - if session[:username] == nil
+          a href="/showlogin" Login
+        - else 
+          a href="/users/logout" Log out
+
+      - if flash[:logout]
+        p.notice = flash[:logout]
+      - elsif flash[:login]
+        p.notice = flash[:login]
+      - elsif flash[:need_login]
+        p.notice = flash[:need_login]
+
       == yield
       nav id="menu"
         a class="menu_button" href="/collection/card" Collection
         a class="menu_button" href="/" Home
         a class="menu_button" href="/market/index" Market
+
+script src="js/main.js"
