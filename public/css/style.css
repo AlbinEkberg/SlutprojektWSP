@@ -159,6 +159,14 @@ a:hover {
     animation: color-change 2s infinite;
 }
 
+#user_list {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
 /*-Classes--------------------------------------------------------------------------------------------------------*/
 
 .notice {

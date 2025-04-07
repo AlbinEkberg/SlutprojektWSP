@@ -104,7 +104,19 @@ get('/showchest') do
 end
 
 get('/admin') do
+    check_admin()
 
+    users = select_all("users")
+
+    slim(:'admin/index', layout: false, locals: { users: users })
+end
+
+post('/admin/:id/delete') do
+    check_admin()
+
+    delete("users", params[:id].to_i)
+
+    redirect('/admin')
 end
 
 post('/chest/open') do

@@ -18,3 +18,5 @@ dynamisk route
 slim(:profile,locals:{key:username}) istället för session på vissa ställen eller @variabel
 
 authorization
+
+cooldown på login för att inte kunna brute force

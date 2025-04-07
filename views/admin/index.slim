@@ -1,0 +1,11 @@
+h1 All users:
+
+a href="/users/logout" Return to normal site
+
+- users.each do |user|
+    ol
+        h2 username: #{user['username']}
+        p id: #{user['id']}
+        p balance: #{user['balance']}
+        form method="POST" action="admin/#{user['id']}/delete"
+            input type="submit" value="Delete"

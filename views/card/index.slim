@@ -1,0 +1,11 @@
+div id="grid_wrapper_collection"
+    h1 id="deck"#{session[:username]}'s Collection
+
+    ol id="card_list"
+        - cards_rel.each do |card_rel|
+            div class="card"
+                - card = cards.find { |c| c['id'] == card_rel['card_id'] }
+                - rarity = card['rarity']
+                img class="card_img" src="/img/cards/#{rarity}/#{card['img']}" alt="image of #{card['name']}"/
+                p class="#{rarity}_card" = card['name']
+                p amount: #{card_rel['amount']}
