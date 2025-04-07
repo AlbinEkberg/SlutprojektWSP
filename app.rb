@@ -4,14 +4,9 @@ require 'sqlite3'
 require 'sinatra/reloader'
 require 'bcrypt'
 require 'sinatra/flash'
+require_relative './model/model.rb'
 
 enable :sessions
-
-def connect_to_db()
-    db = SQLite3::Database.new('db/clash.db')
-    db.results_as_hash = true
-    return db
-end
 
 def generate_chest() # väljer en kista baserat på sällsynthet högre sällsynthet = bättre kista
     db = connect_to_db()
@@ -108,6 +103,10 @@ get('/showchest') do
     slim(:'users/chest_unlock', layout: false)
 end
 
+get('/admin') do
+
+end
+
 post('/chest/open') do
     if session[:current_chest] != nil # körs första gången
         case session[:current_chest]["rarity"] # olika mängd kort beroende på sällsynthet
@@ -178,7 +177,11 @@ post('/users/login') do
         session[:username] = username
         session[:balance] = result["balance"]
         flash[:login] = "Successfully logged in as #{username}"
-        redirect('/')
+        if result["admin"] != nil
+            redirect('/admin')
+        else
+            redirect('/')
+        end
     else
         session[:login_error_message] = "Wrong password"
         redirect('/showlogin')
