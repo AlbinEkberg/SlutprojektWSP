@@ -6,9 +6,12 @@ require 'sqlite3'
 require 'sinatra/reloader'
 require 'bcrypt'
 require 'sinatra/flash'
-require_relative './model/model.rb'
+require_relative '../model/model.rb'
 
 enable :sessions
+
+set :views, File.expand_path('../views', __dir__)
+set :public_folder, File.expand_path('../public', __dir__)
 
 include Model
 
@@ -174,14 +177,24 @@ post('/users/login') do
   username = params[:username]
   password = params[:password]
 
-  if username.empty? || password.empty?
+  session[:login_attempts] ||= 0
+  session[:cooldown_until] ||= nil
+
+  # Cooldown check
+  if session[:cooldown_until] && Time.now < session[:cooldown_until]
+    session[:login_error_message] = "Too many login attempts. Try again in #{(session[:cooldown_until] - Time.now).to_i} seconds."
+    redirect('/showlogin')
+  end
+
+  if username == "" || password == ""
     session[:login_error_message] = "You need to fill in all fields"
     redirect('/showlogin')
   end
 
+  db = connect_to_db()
   result = select_user(username).first
 
-  if result.nil?
+  if result == nil
     session[:login_error_message] = "No such user"
     redirect('/showlogin')
   end
@@ -193,9 +206,20 @@ post('/users/login') do
     session[:id] = id
     session[:username] = username
     session[:balance] = result["balance"]
+    session[:login_attempts] = 0
+    session[:cooldown_until] = nil
     flash[:login] = "Successfully logged in as #{username}"
-    redirect(result["admin"] ? '/admin' : '/')
+    if result["admin"] != nil
+      redirect('/admin')
+    else
+      redirect('/')
+    end
   else
+    session[:login_attempts] += 1
+    if session[:login_attempts] >= 3
+      session[:cooldown_until] = Time.now + 60 # 60 second cooldown
+      session[:login_attempts] = 0
+    end
     session[:login_error_message] = "Wrong password"
     redirect('/showlogin')
   end

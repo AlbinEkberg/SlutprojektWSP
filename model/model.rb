@@ -1,3 +1,9 @@
+##
+# The Model module contains all database-related methods used in the app,
+# such as user authentication, card generation, and data manipulation.
+#
+# It serves as a separation of concerns from the main Sinatra routes,
+# keeping database logic modular and reusable.
 module Model
 
     ##
