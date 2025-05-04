@@ -1,5 +1,10 @@
 div id="grid_wrapper_collection"
-    h1 id="deck"#{session[:username]}'s Collection
+    h1 id="deck" #{session[:username]}'s Collection
+
+    - if flash[:not_enough_cards]
+        p.notice = flash[:not_enough_cards]
+    - elsif flash[:on_market]
+        p.notice = flash[:on_market]
     
     form id="search_bar" oninput="filterCards()"
         input id="search_input" type="text" name="search" placeholder="Search for a card"
@@ -11,6 +16,10 @@ div id="grid_wrapper_collection"
                 img class="card_img" src="/img/cards/#{rarity}/#{card['img']}" alt="image of #{card['name']}"
                 p class="#{rarity}_card" = card['name']
                 p = "Amount: #{card_rel['amount']}"
+
+                form method="GET" action="/card/edit"
+                    input type="hidden" name="card_id" value="#{card['id']}"
+                    input type="submit" value="Sell"
 
     script
         | function filterCards() {

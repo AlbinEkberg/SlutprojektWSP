@@ -8,6 +8,8 @@ require 'bcrypt'
 require 'sinatra/flash'
 require_relative '../model/model.rb'
 
+also_reload '../model/model.rb'
+
 enable :sessions
 
 set :views, File.expand_path('../views', __dir__)
@@ -31,7 +33,7 @@ end
 #
 # @return [Slim::Template] Renders the index view.
 get('/') do
-  generate_chest() if session[:current_chest].nil?
+  session[:current_chest] = generate_chest() if session[:current_chest].nil?
   slim(:index)
 end
 
@@ -48,6 +50,7 @@ end
 ##
 # GET /users/register
 #
+
 # Displays the user registration form.
 #
 # @return [Slim::Template] Renders the user registration form.
@@ -65,6 +68,14 @@ get('/card') do
   cards = select_all_cards()
   cards_rel = select_all_users_cards(session[:id])
   slim(:'card/index', locals: { cards: cards, cards_rel: cards_rel })
+end
+
+get('/card/edit') do
+  card_info, user_card_info = select_all_card_info(params[:card_id].to_i, session[:id].to_i)
+  if user_card_info.nil?
+    halt(403, "Not your card")
+  end
+  slim(:'card/edit', locals: { card_info: card_info, user_card_info: user_card_info }, layout: false)
 end
 
 ##
@@ -86,7 +97,10 @@ end
 #
 # @return [Slim::Template] Renders the market view.
 get('/market') do
-  slim(:'market/index')
+  cards = select_all_cards()
+  cards_rel = select_all_cards_rel()
+  users = select_all_users()
+  slim(:'market/index', locals: { cards: cards, cards_rel: cards_rel, users: users })
 end
 
 ##
@@ -106,9 +120,30 @@ end
 #
 # @return [Slim::Template] Renders the admin dashboard.
 get('/admin') do
-  check_admin()
-  users = select_all_users()
-  slim(:'admin/index', layout: false, locals: { users: users })
+  if check_admin(session[:id])
+    users = select_all_users()
+    slim(:'admin/index', layout: false, locals: { users: users })
+  else
+    redirect('/showlogin')
+  end
+end
+
+post('/card/buy') do
+  buy_card(params[:card_id].to_i, params[:seller_id].to_i, session[:id].to_i)
+  session[:balance] = reload_balance(session[:id])
+  redirect('/market')
+end
+
+post('/card/update') do
+  if session[:id] != params[:user_id].to_i
+    halt(403, "Unauthorized")
+  end
+  if params[:amount].to_i < 1 || params[:price].to_i < 1
+    flash[:not_zero] = "amount and price needs to be greater than 0"
+    redirect("/card/edit?card_id=#{params[:card_id]}")
+  end
+  sell_card(params[:card_id].to_i, params[:price].to_i, params[:amount].to_i, session[:id])
+  redirect('/card')
 end
 
 ##
@@ -119,9 +154,12 @@ end
 # @param [Integer] id The ID of the user to delete.
 # @return [Redirect] Redirects back to the admin panel.
 post('/admin/:id/delete') do
-  check_admin()
-  delete_user(params[:id].to_i)
-  redirect('/admin')
+  if check_admin(session[:id])
+    delete_user(params[:id].to_i)
+    redirect('/admin')
+  else
+    redirect('/showlogin')
+  end
 end
 
 ##
@@ -143,9 +181,8 @@ post('/chest/open') do
     end
 
     gotten_cards = []
-    db = connect_to_db()
     card_amount.times do
-      card = generate_card()
+      card = generate_card(session[:current_chest])
       gotten_cards << card
       add_card_to_user([card], session[:id]) if session[:id]
     end
@@ -191,7 +228,6 @@ post('/users/login') do
     redirect('/showlogin')
   end
 
-  db = connect_to_db()
   result = select_user(username).first
 
   if result == nil
@@ -257,5 +293,8 @@ post('/users/new') do
     session[:username] = username
     flash[:login] = "Successfully logged in as #{username}"
     redirect('/')
+  else
+    session[:register_error_message] = "Passwords do not match"
+    redirect('/users/register')
   end
 end

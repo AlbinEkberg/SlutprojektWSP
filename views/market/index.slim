@@ -1,0 +1,38 @@
+div id="grid_wrapper_collection"
+    h1 id="deck" Market
+
+    - if flash[:not_enough_gold]
+        p.notice = flash[:not_enough_gold]
+    
+    form id="search_bar" oninput="filterCards()"
+        input id="search_input" type="text" name="search" placeholder="Search for a card"
+    ol id="market_list"
+        - cards_rel.each do |card_rel|
+            - if card_rel['for_sale'] > 0
+                - card = cards.find { |c| c['id'] == card_rel['card_id'] }
+                - seller = users.find { |u| u['id'] == card_rel['user_id'] }
+                div id="market_elements"
+                    - rarity = card['rarity']
+                    div class="market_item" data-name=card['name']
+                        img class="card_img" src="/img/cards/#{rarity}/#{card['img']}" alt="image of #{card['name']}"
+                        div class="market_item_info"
+                            p class="#{rarity}_card" = card['name']
+                            p = "Amount: #{card_rel['for_sale']}x"
+                            p = "Price: #{card_rel['price']} gold"
+                            p = "Seller: #{seller['username']}"
+
+                        form method="POST" action="/card/buy"
+                            input type="hidden" name="card_id" value="#{card['id']}"
+                            input type="hidden" name="seller_id" value="#{seller['id']}"
+                            input type="submit" value="Buy"
+
+    script
+        | function filterCards() {
+        |     const searchInput = document.getElementById('search_input').value.toLowerCase();
+        |     const cards = document.querySelectorAll('.market_item');
+        |     cards.forEach(card => {
+        |         const cardName = card.getAttribute('data-name').toLowerCase();
+        |         const matchesAllLetters = [...searchInput].every(letter => cardName.includes(letter));
+        |         card.style.display = searchInput === '' || matchesAllLetters ? 'flex' : 'none';
+        |     });
+        | }

@@ -88,6 +88,11 @@ module Model
       db = connect_to_db
       db.execute("SELECT * FROM users_cards_rel WHERE user_id = ? AND card_id != ?", [id, 44])
     end
+
+    def select_all_cards_rel()
+      db = connect_to_db
+      db.execute("SELECT * FROM users_cards_rel")
+    end
   
     ##
     # Creates a new user if passwords match and returns the new user.
@@ -104,9 +109,6 @@ module Model
   
         db = connect_to_db # reconnect to fetch the new user
         db.execute("SELECT * FROM users WHERE username = ?", username).first
-      else
-        session[:register_error_message] = "Passwords do not match"
-        redirect('/users/register')
       end
     end
   
@@ -118,26 +120,28 @@ module Model
     def delete_user(id)
       db = connect_to_db
       db.execute("DELETE FROM users WHERE id = ?", id)
+      db.execute("DELETE FROM users_cards_rel WHERE user_id = ?", id)
     end
   
     ##
-    # Checks if the current session user is an admin.
-    # Redirects to login if not an admin.
+    # Checks if the current user is an admin.
+    # returns false if not an admin and true if admin.
     #
     # @return [void]
-    def check_admin
+    def check_admin(id)
       db = connect_to_db
       admins = db.execute("SELECT id FROM users WHERE admin IS NOT NULL")
-      unless admins.any? { |admin| admin["id"] == session[:id] }
-        redirect('/showlogin')
+      unless admins.any? { |admin| admin["id"] == id }
+      return false
       end
+      true
     end
   
     ##
-    # Generates a chest for the session based on rarity weights.
+    # Generates a chest based on rarity weights.
     #
     # @return [void]
-    def generate_chest
+    def generate_chest()
       db = connect_to_db
       chests = db.execute("SELECT * FROM chests")
       total_rarity = chests.sum { |chest| chest["rarity"] }
@@ -148,17 +152,17 @@ module Model
         cumulative_rarity += chest["rarity"]
         random_value < cumulative_rarity
       end
-  
-      session[:current_chest] = selected_chest
+      
+      return selected_chest
     end
   
     ##
     # Generates a card based on the current chest rarity and weighted randomness.
     #
     # @return [Hash] card data and amount => { card: Hash, amount: Integer }
-    def generate_card
+    def generate_card(current_chest)
       db = connect_to_db
-      reverse_chest_rarity = 1 + (50 / session[:current_chest]["rarity"])
+      reverse_chest_rarity = 1 + (50 / current_chest["rarity"])
   
       selection = rand(1..(100 - reverse_chest_rarity))
   
@@ -185,5 +189,54 @@ module Model
   
       { card: selected_card, amount: amount }
     end
+
+    def sell_card(card_id, price, amount, user_id)
+      db = connect_to_db
+      result = db.execute("SELECT * FROM users_cards_rel WHERE user_id = ? AND card_id = ?", [user_id, card_id])
+      name = db.execute("SELECT name FROM cards WHERE id = ?", card_id).first["name"]
+
+      old_amount = result[0]["amount"].to_i
+
+      new_amount = old_amount - amount
+
+      if new_amount < 0
+        flash[:not_enough_cards] = "Not enough cards to sell"
+        return
+      end
+
+      amount += result[0]["for_sale"].to_i
+      price += result[0]["price"].to_i
+
+      db.execute("UPDATE users_cards_rel SET for_sale = ?, price = ?, amount = ? WHERE user_id = ? AND card_id = ?", [amount, price, new_amount, user_id, card_id])
+
+      flash[:on_market] = "You now have #{amount}x #{name} for #{price} gold on the market"
+
+    end
+
+    def buy_card(card_id, seller_id, user_id)
+      db = connect_to_db
+      result = db.execute("SELECT * FROM users_cards_rel WHERE user_id = ? AND card_id = ?", [seller_id, card_id])
+      
+      if db.execute("SELECT balance FROM users WHERE id = ?", user_id).first["balance"].to_i < result[0]["price"].to_i
+        flash[:not_enough_gold] = "You dont have enough gold to buy this card!"
+        return
+      end
+
+      db.execute("UPDATE users SET balance = balance - ? WHERE id = ?", [result[0]["price"].to_i, user_id])
+      db.execute("UPDATE users SET balance = balance + ? WHERE id = ?", [result[0]["price"].to_i, seller_id])
+
+      card = db.execute("SELECT * FROM cards WHERE id = ?", card_id).first
+      
+      add_card_to_user([{card:card,amount:result[0]["for_sale"]}], user_id)
+      db.execute("UPDATE users_cards_rel SET for_sale = for_sale - ? WHERE user_id = ? AND card_id = ?", [result[0]["for_sale"].to_i, seller_id, card_id])
+    end
+
+    def select_all_card_info(card_id, user_id)
+      db = connect_to_db
+      card_info = db.execute("SELECT * FROM cards WHERE id = ?", card_id).first
+      user_card_info = db.execute("SELECT * FROM users_cards_rel WHERE card_id = ? AND user_id = ?", [card_id, user_id]).first
+      return card_info, user_card_info
+    end
   end
+
   
